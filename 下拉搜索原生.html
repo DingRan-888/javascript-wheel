@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>search框</title>
+</head>
+<body>
+    <div id="box">
+        <input type="text"><button class="searchbtn">搜索</button>
+        <ul class="searchhistory"></ul>
+    </div>
+
+<script type="text/javascript">
+	var searchBox = document.querySelector('#id');
+    var input = document.querySelector('input');
+    var searchButton = document.querySelector('.searchbtn');
+    var searchHistory = document.querySelector('.searchhistory')
+    console.log(searchButton)
+    searchButton.onclick = function(){
+        if(input.value ===''){
+            alert('不能为空')
+        }else{
+
+
+       //判断localStorage初始状态空数组，不为空的时候将从缓存中取到的值转数组
+            if(localStorage.getItem('ValueList')){
+                 // var inputValueList = JSON.parse(localStorage.getItem('ValueList'))
+                 var inputValueList = getLocalstorage('ValueList')
+             }else{
+                var inputValueList = []
+             }
+            // console.log(input.value)
+            // JSON.parse(localStorage.getItem('ValueList'))
+
+            //将input框中输入的值放进数组中，数组转字符串存入缓存中
+            inputValueList.push(input.value)
+            localStorage.setItem('ValueList',JSON.stringify(inputValueList))
+            createUl()
+            input.value =''
+        }
+    }
+    //封装获取缓存中值的方法
+    function getLocalstorage(key){
+         return JSON.parse(localStorage.getItem(key))
+    }
+    //创建ul
+    function createUl(){
+        var fragment = document.createDocumentFragment();
+        var valueList = getLocalstorage('ValueList')
+        var index = 0;
+        //将伪数组转真数组
+        valueList = Array.from(new Set(valueList))
+        //判断缓存中数组长度最多显示10条
+        if(valueList.length>10){
+            valueList=valueList.slice(-10)
+            console.log(valueList)
+        }   
+        //遍历，上树
+        for (var i = valueList.length - 1; i >= 0; i--) {
+            var li = document.createElement('li')
+            var delBtn = document.createElement('a')
+            delBtn.innerHTML = '×'
+            delBtn.setAttribute('href','javascript:;')
+            delBtn.onclick = function(ev){
+                var span = document.querySelectorAll('span')
+                var indexSpan = valueList.indexOf(span[this.parentNode.index].innerHTML)
+                var vl = getLocalstorage('ValueList')
+                vl.splice(indexSpan,1)
+                localStorage.setItem('ValueList',JSON.stringify(vl))
+                createUl()
+                ev.stopPropagation()
+
+            }
+            li.innerHTML = `<b>[${index}]</b>  <span>${valueList[i]}</span>`
+            li.appendChild(delBtn)
+            fragment.appendChild(li)
+            li.index = index;
+            index++;
+            //点击搜索历史中的li,将li的值置入input搜索框中
+            li.onclick = function(ev){
+                var span = document.querySelectorAll('span')
+                input.value =  span[this.index].innerHTML;
+                showUl(false)
+            }
+        }
+        searchHistory.innerHTML = ''
+        searchHistory.appendChild(fragment)
+        if(searchHistory.innerHTML !== ''){
+            var clearAllBtn = document.createElement('p')
+            clearAllBtn.innerHTML = '清空全部'
+            searchHistory.appendChild(clearAllBtn)
+            clearAllBtn.onclick = function(){
+                console.log(this.parentNode)
+               
+                localStorage.setItem('ValueList',JSON.stringify([]))
+                createUl()
+            }
+        }
+        
+    }
+    window.onload= function (){
+        createUl()
+        showUl(false)
+    }
+    input.onfocus = function(){
+        showUl(true)
+    }
+
+    function showUl(isShow){
+        if(isShow){
+            searchHistory.style.display = 'block';
+        }else{
+            searchHistory.style.display = 'none';
+        }
+    }
+    //如果点击区域不是ul和input，ul隐藏
+    window.onclick = function(el){
+        if(!searchHistory.contains(el.target) && el.target!==input){
+            showUl(false)
+        }
+    }
+
+</script>
+</body>
+</html>
